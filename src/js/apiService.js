@@ -21,7 +21,7 @@ export default class ImageApiService{
             this.page += 1;
         }
         resetPage(){
-            this.psge = 1;
+            this.page = 1;
         }
         get query() {
             return this.searchQuery;

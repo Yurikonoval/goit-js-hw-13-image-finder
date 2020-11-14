@@ -1,36 +1,48 @@
 import './styles.scss';
 import ImageApiServise from './js/apiService.js';
 import imageCardTpl from './templates/image-card.hbs';
+import getRefs from './js/refs.js';
+const debounce = require('lodash.debounce');
+import * as basicLightbox from 'basiclightbox';
+import LoadMoreBtn from './js/load-more-btn.js';
 
+const refs = getRefs();
 
-const refs = {
-    searchForm : document.querySelector(`.search-form`),
-    galleryContainer : document.querySelector(`.gallery`),
-    loadMoreBtn : document.querySelector(`[data-action="load-more"]`),
-}
-
-refs.searchForm.addEventListener(`submit`, onSearch);
-refs.loadMoreBtn.addEventListener(`click`, onLoadMore);
 
 const ImageApiService = new ImageApiServise();
+const loadMoreBtn = new LoadMoreBtn({selector: '[data-action="load-more"]', 
+hidden: true});
+
+refs.searchForm.addEventListener(`input`, debounce(onSearch, 500));
+loadMoreBtn.refs.button.addEventListener(`click`, onLoadMore);
 
 function onSearch(e){
     e.preventDefault();
     
-    ImageApiService.query = e.currentTarget.elements.query.value;
+    ImageApiService.query = e.target.value;
+
+    clearImagesContainer();
 
     if (ImageApiService.query === ''){
+        loadMoreBtn.hide();
         return;
     }
-    ImageApiService.resetPage();    
+    loadMoreBtn.show();
+    ImageApiService.resetPage();
+    loadMoreBtn.disable();    
     ImageApiService.fetchImages().then(hits =>{
-        clearImagesContainer();
-        appendImagesMarkUp(hits);});
+        appendImagesMarkUp(hits);
+        loadMoreBtn.enable();            
+    });  
     
 }
-
-function onLoadMore(){    
-    ImageApiService.fetchImages().then(hits =>{appendImagesMarkUp(hits)});
+function onLoadMore(){
+    loadMoreBtn.disable();    
+    ImageApiService.fetchImages().then(hits =>{
+        appendImagesMarkUp(hits);
+        loadMoreBtn.enable();
+        scrollGallery();            
+    });
 }
 function appendImagesMarkUp(images){
     refs.galleryContainer.insertAdjacentHTML('beforeend', imageCardTpl(images));
@@ -39,5 +51,10 @@ function clearImagesContainer(){
     refs.galleryContainer.innerHTML = '';
 }
 
-
+function scrollGallery(){
+    window.scrollBy({
+        top: document.documentElement.clientHeight - refs.searchForm.clientHeight ,
+        behavior: 'smooth'
+    })
+}
 
