@@ -12,10 +12,10 @@ export default class ImageApiService{
         
         return fetch(url)
         .then(response => response.json())
-        .then(({hits}) => {
-            this.incrementPage();            
-            return hits;
-        });
+        .then(({total, hits}) => {
+            this.incrementPage();                     
+            return {total, hits};
+        }); 
     }
         incrementPage(){
             this.page += 1;
